@@ -14,11 +14,11 @@ int main(int argc, char *argv[])
 	char str[512];
 	char *ptr=str;
 	char *text=NULL;
-	char **index=NULL;
+	char **pointers=NULL;
 	FILE *f;
 	char **fnd,**key=&ptr;
 	char *pch;
-	size_t size,indsize;
+	size_t size,ptrsize;
 	clock_t beg,end;
 	if(argc!=2)
 	{
@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
 		printf("Not enough memory.\n");
 		return 1;
 	}
-	//Выделение памяти под максимально возможное кол-во индексов строк
-	index=(char**)malloc(sizeof(char*)*MAXSTRINGS);
+	//Выделение памяти под максимально возможное кол-во указателей на строки
+	pointers=(char**)malloc(sizeof(char*)*MAXSTRINGS);
 	if(!text)
 	{
 		printf("Not enough memory.\n");
@@ -55,14 +55,14 @@ int main(int argc, char *argv[])
 	printf("Reading: %d msec\n",(int)((end-beg)*1000/CLOCKS_PER_SEC));
 	fclose(f);
 	text[size]=0;
-	indsize=0;
+	ptrsize=0;
 	beg=clock();
 /*	pch = strtok (text,"\r\n");
 	while(pch != NULL)
 	{
 		pch = strtok (NULL, "\r\n");
-		index[indsize]=pch;
-		indsize++;
+		pointers[ptrsize]=pch;
+		ptrsize++;
 	}
 	*/
 //такой парсинг оказался быстрее strtok
@@ -72,19 +72,19 @@ int main(int argc, char *argv[])
 			*pch=0;//поиск начала слова	
 		if(*pch)		//если найдено
 		{
-			index[indsize]=pch;	//запомнить указатель на начало слова(строки) 
-			indsize++;
+			pointers[ptrsize]=pch;	//запомнить указатель на начало слова(строки) 
+			ptrsize++;
 			for(;*pch&&*pch!='\r'&&*pch!='\n';pch++);	//поиск конца слова
 		}
 	}
-	//Перевыделение памяти под индексы, чтобы не занимать лишнюю
+	//Перевыделение памяти под указатели, чтобы не занимать лишнюю
 	//Динамический рост был бы слишком медленным
-	index=(char**)realloc(index,sizeof(char*)*indsize);
+	pointers=(char**)realloc(pointers,sizeof(char*)*ptrsize);
 	end=clock();
 	printf("Parsing: %d msec\n",(int)((end-beg)*1000/CLOCKS_PER_SEC));
 	beg=clock();
-//сортировка массива индексов, быстее библиотечной реализации сделать не удалось
-	qsort(index,indsize,sizeof(char*),sort_func);	//Отсортировать массив строк
+//сортировка массива указателей, быстее библиотечной реализации сделать не удалось
+	qsort(pointers,ptrsize,sizeof(char*),sort_func);	//Отсортировать массив указателей на строки
 	end=clock();
 	printf("Sorting: %d msec\n",(int)((end-beg)*1000/CLOCKS_PER_SEC));
 	printf("Enter strings:\n");
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 			break;
 		beg=clock();
 		//Двоичный поиск строки
-		fnd=(char**)bsearch(key,index,indsize,sizeof(char*),sort_func);
+		fnd=(char**)bsearch(key,pointers,ptrsize,sizeof(char*),sort_func);
 		end=clock();
 		if(fnd)
 			printf("YES\n");
@@ -105,6 +105,6 @@ int main(int argc, char *argv[])
 			printf("NO\n");
 	}
 	free(text);
-	free(index);
+	free(pointers);
 	return 0;
 }
